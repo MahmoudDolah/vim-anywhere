@@ -19,8 +19,9 @@ __OSX:__
 
 __Linux:__
 
-- Gnome (or a derivative)
+- GNOME (or a derivative) *or* KDE Plasma
 - gVim
+- `xclip` (X11) or `wl-clipboard` (Wayland)
 
 #### Install
 
@@ -56,6 +57,10 @@ __Linux:__ ( default = `ctrl+alt+v` )
 ```bash
 $ gconftool -t str --set /desktop/gnome/keybindings/vim-anywhere/binding <custom binding>
 ```
+
+*KDE*
+
+Open **System Settings > Shortcuts > Custom Shortcuts**, find the *vim-anywhere* entry, and change the trigger to your preferred key combination.
 
 *I3WM*
 

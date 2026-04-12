@@ -24,6 +24,7 @@ done
 ###
 
 check_installed() { hash $1 &> /dev/null; }
+is_kde() { [[ "$XDG_CURRENT_DESKTOP" == *"KDE"* ]] || [[ -n "$KDE_FULL_SESSION" ]]; }
 
 AW_PATH=$HOME/.vim-anywhere
 DOC_PATH=/tmp/vim-anywhere
@@ -32,11 +33,58 @@ DOC_PATH=/tmp/vim-anywhere
 # uninstall
 ###
 
-rm -rf $AW_PATH $DOC_PATH
-
-# Linux uninstall
+# Linux uninstall (must happen before rm -rf removes .kde_index)
 if [[ $OSTYPE == "linux-gnu" ]]; then
-  if check_installed gconftool; then
+  if is_kde; then
+    if [ -f "$AW_PATH/.kde_index" ]; then
+      kde_index=$(cat "$AW_PATH/.kde_index")
+      python3 - "$kde_index" << 'PYEOF'
+import sys
+from pathlib import Path
+
+index = sys.argv[1]
+config_file = Path.home() / '.config' / 'khotkeysrc'
+
+if not config_file.exists():
+    sys.exit(0)
+
+groups_to_remove = {
+    f'Data_{index}',
+    f'Data_{index}Actions',
+    f'Data_{index}Actions0',
+    f'Data_{index}Conditions',
+    f'Data_{index}Triggers',
+    f'Data_{index}Triggers0',
+}
+
+with open(config_file, 'r') as f:
+    lines = f.readlines()
+
+output = []
+skip = False
+for line in lines:
+    stripped = line.strip()
+    if stripped.startswith('[') and ']' in stripped:
+        section = stripped[1:stripped.index(']')]
+        skip = section in groups_to_remove
+    if not skip:
+        output.append(line)
+
+new_output = []
+for line in output:
+    if line.strip().startswith('DataCount='):
+        count = int(line.split('=')[1].strip())
+        new_output.append(f'DataCount={max(0, count - 1)}\n')
+    else:
+        new_output.append(line)
+
+with open(config_file, 'w') as f:
+    f.writelines(new_output)
+PYEOF
+      qdbus org.kde.khotkeys /modules/khotkeys reread_configuration 2>/dev/null || true
+    fi
+
+  elif check_installed gconftool; then
     kbd_path=/desktop/gnome/keybindings/vim-anywhere
     gconftool --unset $kbd_path/name
     gconftool --unset $kbd_path/binding
@@ -47,10 +95,13 @@ if [[ $OSTYPE == "linux-gnu" ]]; then
     kbd_path=/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vim-anywhere/
     gsettings reset-recursively $custom_kbd:$kbd_path
   fi
+fi
 
 # OSX uninstall
-elif [[ $OSTYPE == "darwin"* ]]; then
+if [[ $OSTYPE == "darwin"* ]]; then
   rm -rf $HOME/Library/Services/VimAnywhere.workflow
 fi
+
+rm -rf $AW_PATH $DOC_PATH
 
 echo "vim-anywhere has been successfully uninstalled!"

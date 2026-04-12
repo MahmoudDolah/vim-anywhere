@@ -57,7 +57,11 @@ touch $TMPFILE
 if [[ $OSTYPE == "linux-gnu" ]]; then
   chmod o-r $TMPFILE # Make file only readable by you
   gvim $VIM_OPTS $TMPFILE
-  cat $TMPFILE | xclip -selection clipboard
+  if [[ "$XDG_SESSION_TYPE" == "wayland" ]] || [[ -n "$WAYLAND_DISPLAY" ]]; then
+    cat $TMPFILE | wl-copy
+  else
+    cat $TMPFILE | xclip -selection clipboard
+  fi
 
 # OSX
 elif [[ $OSTYPE == "darwin"* ]]; then

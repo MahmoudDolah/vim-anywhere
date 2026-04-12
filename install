@@ -49,6 +49,13 @@ AW_PATH=$HOME/.vim-anywhere
 AW_URL='https://github.com/cknadler/vim-anywhere'
 
 ###
+# defs (continued)
+###
+
+is_kde() { [[ "$XDG_CURRENT_DESKTOP" == *"KDE"* ]] || [[ -n "$KDE_FULL_SESSION" ]]; }
+is_wayland() { [[ "$XDG_SESSION_TYPE" == "wayland" ]] || [[ -n "$WAYLAND_DISPLAY" ]]; }
+
+###
 # pre-installation checks
 ###
 
@@ -70,9 +77,18 @@ fi
 
 # Linux specific checks
 if [[ $OSTYPE == "linux-gnu" ]]; then
-  require_one_installed gconftool gsettings
   require_installed gvim
-  require_installed xclip
+  if is_kde; then
+    require_installed kwriteconfig5
+    if is_wayland; then
+      require_installed wl-copy 'Install the wl-clipboard package.'
+    else
+      require_installed xclip
+    fi
+  else
+    require_one_installed gconftool gsettings
+    require_installed xclip
+  fi
 
 # OSX specific checks
 elif [[ $OSTYPE == "darwin"* ]]; then
@@ -95,12 +111,39 @@ git clone $AW_URL $AW_PATH
 # Linux install
 if [[ $OSTYPE == "linux-gnu" ]]; then
   name="vim-anywhere"
-  binding="<CTRL><ALT>v"
   action=$AW_PATH/bin/run
+
+  if is_kde; then
+    kde_binding="Ctrl+Alt+V"
+    uuid="{$(uuidgen 2>/dev/null || cat /proc/sys/kernel/random/uuid)}"
+    index=$(kreadconfig5 --file khotkeysrc --group Data --key DataCount --default 0)
+    index=$((index + 1))
+
+    kwriteconfig5 --file khotkeysrc --group Data --key DataCount "$index"
+    kwriteconfig5 --file khotkeysrc --group "Data_$index" --key Comment ""
+    kwriteconfig5 --file khotkeysrc --group "Data_$index" --key Enabled true
+    kwriteconfig5 --file khotkeysrc --group "Data_$index" --key Name "$name"
+    kwriteconfig5 --file khotkeysrc --group "Data_$index" --key SystemGroup 0
+    kwriteconfig5 --file khotkeysrc --group "Data_$index" --key Type "SIMPLE_ACTION_DATA"
+    kwriteconfig5 --file khotkeysrc --group "Data_${index}Actions" --key ActionsCount 1
+    kwriteconfig5 --file khotkeysrc --group "Data_${index}Actions0" --key CommandURL "$action"
+    kwriteconfig5 --file khotkeysrc --group "Data_${index}Actions0" --key Type "COMMAND_URL"
+    kwriteconfig5 --file khotkeysrc --group "Data_${index}Conditions" --key Comment ""
+    kwriteconfig5 --file khotkeysrc --group "Data_${index}Conditions" --key ConditionsCount 0
+    kwriteconfig5 --file khotkeysrc --group "Data_${index}Triggers" --key Comment "Simple_action"
+    kwriteconfig5 --file khotkeysrc --group "Data_${index}Triggers" --key TriggersCount 1
+    kwriteconfig5 --file khotkeysrc --group "Data_${index}Triggers0" --key Key "$kde_binding"
+    kwriteconfig5 --file khotkeysrc --group "Data_${index}Triggers0" --key Type "SHORTCUT"
+    kwriteconfig5 --file khotkeysrc --group "Data_${index}Triggers0" --key Uuid "$uuid"
+
+    echo "$index" > "$AW_PATH/.kde_index"
+    qdbus org.kde.khotkeys /modules/khotkeys reread_configuration 2>/dev/null || \
+      echo "Note: Please re-login for the keybinding to take effect."
 
   # We always try gconftool first. It is deprecated so it won't be on newer
   # installs. If it's installed, we know we are on older versions of Gnome.
-  if check_installed gconftool; then
+  elif check_installed gconftool; then
+    binding="<CTRL><ALT>v"
     kbd_path=/desktop/gnome/keybindings/vim-anywhere
     gconftool -t str --set $kbd_path/name $name
     gconftool -t str --set $kbd_path/binding $binding
@@ -109,6 +152,7 @@ if [[ $OSTYPE == "linux-gnu" ]]; then
   # At this point, we know we are using dconf, the currently supported settings
   # manager. gsettings is the gnome client for dconf.
   else
+    binding="<CTRL><ALT>v"
     media_keys=org.gnome.settings-daemon.plugins.media-keys
     custom_kbd=org.gnome.settings-daemon.plugins.media-keys.custom-keybinding
     kbd_path=/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/vim-anywhere/
