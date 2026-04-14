@@ -38,14 +38,14 @@ done
 AW_PATH=$HOME/.vim-anywhere
 TMPFILE_DIR=/tmp/vim-anywhere
 TMPFILE=$TMPFILE_DIR/doc-$(date +"%y%m%d%H%M%S")
-VIM_OPTS=--nofork
+VIM_OPTS=""
 
-# Use ~/.gvimrc.min or ~/.vimrc.min if one exists
-VIMRC_PATH=($HOME/.gvimrc.min $HOME/.vimrc.min)
+# Use ~/.vimrc.min if one exists
+VIMRC_PATH=($HOME/.vimrc.min $HOME/.gvimrc.min)
 
 for vimrc_path in "${VIMRC_PATH[@]}"; do
     if [ -f $vimrc_path ]; then
-        VIM_OPTS+=" -u $vimrc_path"
+        VIM_OPTS="-u $vimrc_path"
         break
     fi
 done
@@ -56,7 +56,24 @@ touch $TMPFILE
 # Linux
 if [[ $OSTYPE == "linux-gnu" ]]; then
   chmod o-r $TMPFILE # Make file only readable by you
-  gvim $VIM_OPTS $TMPFILE
+
+  if hash ghostty 2>/dev/null; then
+    ghostty -e vim $VIM_OPTS $TMPFILE
+  elif hash wezterm 2>/dev/null; then
+    wezterm start -- vim $VIM_OPTS $TMPFILE
+  elif hash alacritty 2>/dev/null; then
+    alacritty -e vim $VIM_OPTS $TMPFILE
+  elif hash kitty 2>/dev/null; then
+    kitty vim $VIM_OPTS $TMPFILE
+  elif hash foot 2>/dev/null; then
+    foot vim $VIM_OPTS $TMPFILE
+  elif hash xterm 2>/dev/null; then
+    xterm -e vim $VIM_OPTS $TMPFILE
+  else
+    err "vim-anywhere: no supported terminal emulator found.\nInstall one of: ghostty, wezterm, alacritty, kitty, foot, xterm"
+    exit 1
+  fi
+
   if [[ "$XDG_SESSION_TYPE" == "wayland" ]] || [[ -n "$WAYLAND_DISPLAY" ]]; then
     cat $TMPFILE | wl-copy
   else
@@ -76,7 +93,7 @@ elif [[ $OSTYPE == "darwin"* ]]; then
     "mvim must have been moved or uninstalled.\nPlease make sure it is" \
     "available in your path and then reinstall vim-anywhere."
 
-  $mvim_path $VIM_OPTS $TMPFILE
+  $mvim_path --nofork $VIM_OPTS $TMPFILE
   # todo, fix invalid file
 
   # NOTE

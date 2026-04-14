@@ -20,7 +20,8 @@ __OSX:__
 __Linux:__
 
 - GNOME (or a derivative) *or* KDE Plasma
-- gVim
+- `vim`
+- A supported terminal emulator: ghostty, wezterm, alacritty, kitty, foot, or xterm (first one found in that order is used)
 - `xclip` (X11) or `wl-clipboard` (Wayland)
 
 #### Install

@@ -77,7 +77,8 @@ fi
 
 # Linux specific checks
 if [[ $OSTYPE == "linux-gnu" ]]; then
-  require_installed gvim
+  require_installed vim
+  require_one_installed ghostty wezterm alacritty kitty foot xterm
   if is_kde; then
     require_installed kwriteconfig5
     if is_wayland; then
