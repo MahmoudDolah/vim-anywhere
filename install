@@ -6,7 +6,7 @@
 #
 # Installs vim-anywhere. Intended for use via curl:
 #
-#   $ curl -fsSL https://raw.github.com/cknadler/vim-anywhere/master/install | bash
+#   $ curl -fsSL https://raw.github.com/mahmouddolah/vim-anywhere/master/install | bash
 
 set -e
 
@@ -80,7 +80,7 @@ if [[ $OSTYPE == "linux-gnu" ]]; then
   require_installed vim
   require_one_installed ghostty wezterm alacritty kitty foot xterm
   if is_kde; then
-    require_installed kwriteconfig5
+    require_installed kwriteconfig6
     if is_wayland; then
       require_installed wl-copy 'Install the wl-clipboard package.'
     else
@@ -112,33 +112,33 @@ git clone $AW_URL $AW_PATH
 # Linux install
 if [[ $OSTYPE == "linux-gnu" ]]; then
   name="vim-anywhere"
-  action=$AW_PATH/bin/run
+  action=$AW_PATH/bin/run.sh
 
   if is_kde; then
     kde_binding="Ctrl+Alt+V"
     uuid="{$(uuidgen 2>/dev/null || cat /proc/sys/kernel/random/uuid)}"
-    index=$(kreadconfig5 --file khotkeysrc --group Data --key DataCount --default 0)
+    index=$(kreadconfig6 --file khotkeysrc --group Data --key DataCount --default 0)
     index=$((index + 1))
 
-    kwriteconfig5 --file khotkeysrc --group Data --key DataCount "$index"
-    kwriteconfig5 --file khotkeysrc --group "Data_$index" --key Comment ""
-    kwriteconfig5 --file khotkeysrc --group "Data_$index" --key Enabled true
-    kwriteconfig5 --file khotkeysrc --group "Data_$index" --key Name "$name"
-    kwriteconfig5 --file khotkeysrc --group "Data_$index" --key SystemGroup 0
-    kwriteconfig5 --file khotkeysrc --group "Data_$index" --key Type "SIMPLE_ACTION_DATA"
-    kwriteconfig5 --file khotkeysrc --group "Data_${index}Actions" --key ActionsCount 1
-    kwriteconfig5 --file khotkeysrc --group "Data_${index}Actions0" --key CommandURL "$action"
-    kwriteconfig5 --file khotkeysrc --group "Data_${index}Actions0" --key Type "COMMAND_URL"
-    kwriteconfig5 --file khotkeysrc --group "Data_${index}Conditions" --key Comment ""
-    kwriteconfig5 --file khotkeysrc --group "Data_${index}Conditions" --key ConditionsCount 0
-    kwriteconfig5 --file khotkeysrc --group "Data_${index}Triggers" --key Comment "Simple_action"
-    kwriteconfig5 --file khotkeysrc --group "Data_${index}Triggers" --key TriggersCount 1
-    kwriteconfig5 --file khotkeysrc --group "Data_${index}Triggers0" --key Key "$kde_binding"
-    kwriteconfig5 --file khotkeysrc --group "Data_${index}Triggers0" --key Type "SHORTCUT"
-    kwriteconfig5 --file khotkeysrc --group "Data_${index}Triggers0" --key Uuid "$uuid"
+    kwriteconfig6 --file khotkeysrc --group Data --key DataCount "$index"
+    kwriteconfig6 --file khotkeysrc --group "Data_$index" --key Comment ""
+    kwriteconfig6 --file khotkeysrc --group "Data_$index" --key Enabled true
+    kwriteconfig6 --file khotkeysrc --group "Data_$index" --key Name "$name"
+    kwriteconfig6 --file khotkeysrc --group "Data_$index" --key SystemGroup 0
+    kwriteconfig6 --file khotkeysrc --group "Data_$index" --key Type "SIMPLE_ACTION_DATA"
+    kwriteconfig6 --file khotkeysrc --group "Data_${index}Actions" --key ActionsCount 1
+    kwriteconfig6 --file khotkeysrc --group "Data_${index}Actions0" --key CommandURL "$action"
+    kwriteconfig6 --file khotkeysrc --group "Data_${index}Actions0" --key Type "COMMAND_URL"
+    kwriteconfig6 --file khotkeysrc --group "Data_${index}Conditions" --key Comment ""
+    kwriteconfig6 --file khotkeysrc --group "Data_${index}Conditions" --key ConditionsCount 0
+    kwriteconfig6 --file khotkeysrc --group "Data_${index}Triggers" --key Comment "Simple_action"
+    kwriteconfig6 --file khotkeysrc --group "Data_${index}Triggers" --key TriggersCount 1
+    kwriteconfig6 --file khotkeysrc --group "Data_${index}Triggers0" --key Key "$kde_binding"
+    kwriteconfig6 --file khotkeysrc --group "Data_${index}Triggers0" --key Type "SHORTCUT"
+    kwriteconfig6 --file khotkeysrc --group "Data_${index}Triggers0" --key Uuid "$uuid"
 
     echo "$index" > "$AW_PATH/.kde_index"
-    qdbus org.kde.khotkeys /modules/khotkeys reread_configuration 2>/dev/null || \
+    qdbus6 org.kde.khotkeys /modules/khotkeys reread_configuration 2>/dev/null || \
       echo "Note: Please re-login for the keybinding to take effect."
 
   # We always try gconftool first. It is deprecated so it won't be on newer
