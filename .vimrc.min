@@ -1,0 +1,5 @@
+set so=999
+set number
+set relativenumber
+set nocompatible
+inoremap jj <Esc>
